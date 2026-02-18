@@ -1,0 +1,18 @@
+services:
+  backend:
+    build:
+      context: ./projects/edu-bot-backend
+      dockerfile: ../Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  frontend:
+    build:
+      context: ./projects/edu-bot-ui
+      dockerfile: ../Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

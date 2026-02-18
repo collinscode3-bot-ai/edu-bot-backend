@@ -1,34 +1,31 @@
-FROM openjdk:17-jdk-slim as builder
+# Stage 1: Build the Angular application
+FROM node:20 as builder
 
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
 
-# Make the wrapper executable
-RUN chmod +x mvnw
+# Install dependencies
+RUN npm install
 
-# Download dependencies
-RUN ./mvnw dependency:go-offline
+# Copy the rest of the application code
+COPY . .
 
-# Build the application JAR
-COPY src ./src
-RUN ./mvnw package -DskipTests
+# Build the Angular application for production
+RUN npm run build --prod
 
-# --- Runtime stage ---
-FROM openjdk:17-jdk-slim
+# Stage 2: Serve the static files with Nginx
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy the built Angular files from the builder stage to Nginx's web root
+COPY --from=builder /app/dist/edu-bot-ui /usr/share/nginx/html
 
-# Copy the executable jar file from the builder stage
-COPY --from=builder /app/target/edu-bot-backend-0.0.1-SNAPSHOT.jar app.jar
+# Copy a custom Nginx configuration if needed (e.g., for routing)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Make port 8080 available to the world outside this container
-EXPOSE 8080
+# Expose port 80
+EXPOSE 80
 
-# Define environment variable
-ENV SPRING_PROFILES_ACTIVE=docker
-
-# Run the jar file
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
