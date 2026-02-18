@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 public class Metric {
 
+    // Log statement added here
+    public static final System.Logger consoleLogger = System.getLogger("com.example.demo.Metric");
+
     private String id;
     private String name;
     private double value;
